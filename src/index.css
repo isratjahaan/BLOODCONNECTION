@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --crimson: 139 16 40;
+    --burgundy: 74 13 28;
+    --gold: 212 175 55;
+    --champagne: 198 161 91;
+    --ivory: 248 241 229;
+    --charcoal: 36 33 38;
+  }
+
+  body {
+    background-color: #F8F1E5;
+    color: #242126;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+/* Custom golden scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F8F1E5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C6A15B;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8B1028;
+}
+
+/* Print utilities for ID Cards & Certificates */
+@media print {
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #FFE685 0%, #D4AF37 50%, #C6A15B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-pattern-dots {
+  background-image: radial-gradient(#C6A15B 1px, transparent 1px);
+  background-size: 24px 24px;
+}
