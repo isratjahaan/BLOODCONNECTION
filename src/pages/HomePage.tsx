@@ -138,9 +138,9 @@ export const HomePage: React.FC = () => {
                 <div className="relative z-10 flex flex-col items-center">
                   <div className="relative group">
                     <img
-                      src="/assets/images/blood-connection-logo.png"
-                      alt="Blood Connection Symbol"
-                      className="w-48 sm:w-56 h-auto object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)] transition-transform duration-500 hover:scale-105"
+                      src="/assets/images/blood-connection-logo-gold.jpg"
+                      alt="BLOOD CONNECTION Official Logo"
+                      className="w-56 sm:w-72 h-auto object-contain rounded-2xl shadow-2xl filter drop-shadow-[0_15px_30px_rgba(212,175,55,0.45)] transition-transform duration-500 hover:scale-105 border-2 border-gold/60"
                     />
                   </div>
                 </div>

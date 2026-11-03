@@ -136,11 +136,11 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
           {/* Card Inner with Royal Burgundy Background & Hologram Watermark */}
           <div className="relative w-full h-full rounded-[14px] bg-gradient-to-br from-burgundy-dark via-burgundy to-[#1A0308] text-white overflow-hidden p-4 sm:p-5 flex flex-col justify-between border border-gold/40">
             {/* Bangladesh Map Watermark in Background */}
-            <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-10 pointer-events-none flex items-center justify-center">
+            <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-15 pointer-events-none flex items-center justify-center">
               <img
-                src="/assets/images/blood-connection-logo.png"
+                src="/assets/images/blood-connection-logo-gold.jpg"
                 alt=""
-                className="w-full h-auto object-contain filter grayscale"
+                className="w-full h-auto object-contain rounded-xl"
               />
             </div>
 
@@ -148,18 +148,18 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
             {!isFlipped ? (
               <>
                 {/* Header: Logo, Republic Header, Status */}
-                <div className="flex items-center justify-between border-b border-gold/30 pb-2.5 z-10">
+                <div className="flex items-center justify-between border-b border-gold/30 pb-2 z-10">
                   <div className="flex items-center gap-2">
                     <img
-                      src="/assets/images/blood-connection-logo.png"
+                      src="/assets/images/blood-connection-logo-gold.jpg"
                       alt="BC Logo"
-                      className="w-8 h-8 object-contain"
+                      className="w-9 h-9 object-cover rounded-lg border border-gold/60"
                     />
                     <div>
-                      <h4 className="font-serif font-black text-sm tracking-wider text-gold-metallic">
+                      <h4 className="font-serif font-black text-xs sm:text-sm tracking-wider text-gold-metallic">
                         BLOOD CONNECTION
                       </h4>
-                      <p className="text-[8.5px] uppercase tracking-widest text-gold-champagne font-medium">
+                      <p className="text-[8px] uppercase tracking-widest text-gold-champagne font-medium">
                         National Blood Ecosystem Bangladesh
                       </p>
                     </div>
