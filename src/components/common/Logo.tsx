@@ -11,40 +11,22 @@ interface LogoProps {
 export const Logo: React.FC<LogoProps> = ({
   variant = 'full',
   className = '',
-  showTagline = true,
   linkToHome = true,
 }) => {
   const logoContent = (
-    <div className={`flex items-center gap-3 select-none ${className}`}>
-      {/* Official 3D Gold Embossed Logo */}
+    <div className={`flex items-center select-none ${className}`}>
+      {/* Official Transparent 3D Gold Logo */}
       <img
-        src="/assets/images/blood-connection-logo-gold.jpg"
-        alt="BLOOD CONNECTION"
-        className={`object-contain rounded-xl shadow-md border border-gold/50 transition-transform duration-200 hover:scale-105 ${
+        src="/assets/images/blood-connection-logo-final.png"
+        alt="BLOOD CONNECTION — Connecting Blood Donors. Saving Lives."
+        className={`object-contain transition-transform duration-200 hover:scale-105 filter drop-shadow-[0_2px_10px_rgba(212,175,55,0.35)] ${
           variant === 'icon'
-            ? 'h-10 w-10 md:h-12 md:w-12 object-cover'
+            ? 'h-10 w-10 md:h-12 md:w-12 object-contain'
             : variant === 'compact'
             ? 'h-11 sm:h-12 w-auto'
-            : 'h-14 sm:h-16 w-auto'
+            : 'h-14 sm:h-16 md:h-18 w-auto max-w-[280px]'
         }`}
       />
-      {variant === 'full' && (
-        <div className="hidden sm:flex flex-col justify-center">
-          <div className="flex items-center gap-1.5 leading-tight">
-            <span className="font-serif font-black tracking-wider text-xl sm:text-2xl text-gold-metallic drop-shadow-md">
-              BLOOD
-            </span>
-            <span className="font-serif font-extrabold tracking-wide text-xl sm:text-2xl text-white drop-shadow-md">
-              CONNECTION
-            </span>
-          </div>
-          {showTagline && (
-            <span className="text-[10px] sm:text-xs font-semibold text-gold-champagne tracking-widest uppercase mt-0.5">
-              Connecting Blood Donors • Saving Lives
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 
@@ -52,7 +34,7 @@ export const Logo: React.FC<LogoProps> = ({
     return (
       <Link
         to="/"
-        className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-gold rounded-xl"
+        className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-gold rounded-xl py-1"
         title="BLOOD CONNECTION — Connecting Blood Donors. Saving Lives."
       >
         {logoContent}

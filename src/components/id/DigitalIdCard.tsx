@@ -136,11 +136,11 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
           {/* Card Inner with Royal Burgundy Background & Hologram Watermark */}
           <div className="relative w-full h-full rounded-[14px] bg-gradient-to-br from-burgundy-dark via-burgundy to-[#1A0308] text-white overflow-hidden p-4 sm:p-5 flex flex-col justify-between border border-gold/40">
             {/* Bangladesh Map Watermark in Background */}
-            <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-15 pointer-events-none flex items-center justify-center">
+            <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none flex items-center justify-center">
               <img
-                src="/assets/images/blood-connection-logo-gold.jpg"
+                src="/assets/images/blood-connection-logo-final.png"
                 alt=""
-                className="w-full h-auto object-contain rounded-xl"
+                className="w-full h-auto object-contain"
               />
             </div>
 
@@ -151,9 +151,9 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
                 <div className="flex items-center justify-between border-b border-gold/30 pb-2 z-10">
                   <div className="flex items-center gap-2">
                     <img
-                      src="/assets/images/blood-connection-logo-gold.jpg"
+                      src="/assets/images/blood-connection-logo-final.png"
                       alt="BC Logo"
-                      className="w-9 h-9 object-cover rounded-lg border border-gold/60"
+                      className="w-10 h-10 object-contain"
                     />
                     <div>
                       <h4 className="font-serif font-black text-xs sm:text-sm tracking-wider text-gold-metallic">
