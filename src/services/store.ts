@@ -1214,11 +1214,31 @@ class BloodConnectionStore {
   }
 
   public getIdCardByToken(token: string): (DigitalIdCard & { profile?: UserProfile; donor?: DonorProfile }) | undefined {
-    const card = this.idCards.find((c) => c.verificationToken === token || c.idNumber === token);
+    if (!token) return undefined;
+    const cleanToken = token.trim().toLowerCase();
+    const card = this.idCards.find(
+      (c) =>
+        (c.verificationToken && c.verificationToken.toLowerCase() === cleanToken) ||
+        (c.idNumber && c.idNumber.toLowerCase() === cleanToken)
+    );
     if (!card) return undefined;
     const profile = this.profiles.find((p) => p.id === card.userId);
     const donor = this.donors.find((d) => d.userId === card.userId);
     return { ...card, profile, donor };
+  }
+
+  public saveIdCard(card: DigitalIdCard): void {
+    const existingIndex = this.idCards.findIndex(
+      (c) =>
+        (c.verificationToken && c.verificationToken.toLowerCase() === card.verificationToken.toLowerCase()) ||
+        (c.idNumber && c.idNumber.toLowerCase() === card.idNumber.toLowerCase())
+    );
+    if (existingIndex >= 0) {
+      this.idCards[existingIndex] = { ...this.idCards[existingIndex], ...card };
+    } else {
+      this.idCards.unshift(card);
+    }
+    this.persist();
   }
 
   public generateIdCardForUser(profile: UserProfile, bloodGroup?: BloodGroup): DigitalIdCard {

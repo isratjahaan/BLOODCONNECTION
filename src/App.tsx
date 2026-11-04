@@ -41,6 +41,7 @@ export function App() {
                 <Route path="/requests/:id" element={<BloodRequestDetailPage />} />
                 <Route path="/organizations" element={<OrganizationsPage />} />
                 <Route path="/campaigns" element={<CampaignsPage />} />
+                <Route path="/verify" element={<QrVerificationPage />} />
                 <Route path="/verify/:token" element={<QrVerificationPage />} />
                 <Route path="/dashboard" element={<DashboardRouter />} />
                 <Route path="/about" element={<AboutPage />} />

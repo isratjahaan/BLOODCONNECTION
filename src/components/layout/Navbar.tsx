@@ -4,6 +4,7 @@ import { Logo } from '../common/Logo';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { UserRole } from '../../types';
+import { QrScannerModal } from '../id/QrScannerModal';
 import {
   Menu,
   X,
@@ -25,6 +26,7 @@ export const Navbar: React.FC = () => {
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [registerDropdownOpen, setRegisterDropdownOpen] = useState(false);
   const [findDropdownOpen, setFindDropdownOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const location = useLocation();
 
   const allRoles: { role: UserRole; label: string; icon: string }[] = [
@@ -261,6 +263,16 @@ export const Navbar: React.FC = () => {
               )}
             </div>
 
+            {/* Quick QR & ID Scanner Button */}
+            <button
+              onClick={() => setScannerOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 bg-gold/15 hover:bg-gold/30 border border-gold/50 rounded-full text-xs font-bold text-gold transition-all shadow-sm cursor-pointer"
+              title="Open ID Card & QR Scanner"
+            >
+              <QrCode className="w-3.5 h-3.5 text-gold" />
+              <span>{language === 'bn' ? 'স্ক্যানার' : 'Scanner'}</span>
+            </button>
+
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'en' ? 'bn' : 'en')}
@@ -392,6 +404,16 @@ export const Navbar: React.FC = () => {
             >
               {t('navOrganizations')}
             </Link>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setScannerOpen(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gold/20 border border-gold/40 text-gold font-bold text-sm cursor-pointer"
+            >
+              <QrCode className="w-4 h-4 text-gold" />
+              <span>{language === 'bn' ? 'আইডি কার্ড স্ক্যানার' : 'ID Card Scanner'}</span>
+            </button>
           </div>
 
           <div className="pt-2 flex gap-2">
@@ -412,6 +434,11 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       )}
+
+      <QrScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+      />
     </header>
   );
 };

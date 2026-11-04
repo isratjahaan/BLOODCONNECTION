@@ -30,7 +30,32 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const verificationUrl = `${window.location.origin}/verify/${idCard.verificationToken}`;
+  // Generate universal cross-device QR code payload
+  const generateVerificationUrl = (card: IdCardType) => {
+    try {
+      const payload = {
+        t: card.verificationToken,
+        n: card.fullName,
+        r: card.role,
+        i: card.idNumber,
+        b: card.bloodGroup,
+        a: card.avatarUrl,
+        d: card.assignedDistrict,
+        u: card.assignedUpazila,
+        o: card.organizationName,
+        s: card.status,
+        iss: card.issueDate,
+        exp: card.expiryDate,
+      };
+      const jsonStr = JSON.stringify(payload);
+      const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
+      return `${window.location.origin}/verify/${card.verificationToken}?d=${encoded}`;
+    } catch {
+      return `${window.location.origin}/verify/${card.verificationToken}`;
+    }
+  };
+
+  const verificationUrl = generateVerificationUrl(idCard);
 
   const copyVerificationLink = () => {
     navigator.clipboard.writeText(verificationUrl);
@@ -325,6 +350,18 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
             <Printer className="w-3.5 h-3.5" />
             <span>Print</span>
           </button>
+
+          {/* Open Verification Portal */}
+          <a
+            href={verificationUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow"
+            title="Open live verification page in new tab"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Verify Live</span>
+          </a>
 
           {/* Copy Verification Link */}
           <button
