@@ -42,16 +42,44 @@
   background: #8B1028;
 }
 
-/* Print utilities for ID Cards & Certificates */
+/* Print optimization for Official ID Cards & Badges */
 @media print {
-  body {
-    background: white !important;
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
   }
-  .no-print {
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide all web UI, headers, navigation and non-print elements */
+  header,
+  footer,
+  nav,
+  .no-print,
+  button,
+  .screen-only-card {
     display: none !important;
   }
-  .print-only {
-    display: block !important;
+
+  /* Display printable ID card sheet with exact CR80 physical dimensions */
+  #printable-id-card-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 5mm 0 !important;
   }
 }
 

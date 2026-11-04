@@ -149,8 +149,8 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
 
   return (
     <div className="flex flex-col items-center">
-      {/* 3D Flip Card Container */}
-      <div className="perspective-1000 w-full max-w-[430px]">
+      {/* 3D Flip Card Container (Screen View Only) */}
+      <div className="perspective-1000 w-full max-w-[430px] screen-only-card">
         <div
           ref={cardRef}
           className={`relative w-full aspect-[1.586] rounded-2xl p-0.5 shadow-2xl transition-all duration-700 transform-style-3d ${
@@ -458,6 +458,213 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
           </div>
         </div>
       )}
+
+      {/* ============================================================== */}
+      {/* DEDICATED PRINT SHEET (Visible ONLY when printing / window.print) */}
+      {/* Physical dimensions: ISO/IEC 7810 ID-1 standard (85.6 mm × 54.0 mm) */}
+      {/* ============================================================== */}
+      <div id="printable-id-card-sheet" className="hidden print:flex flex-col items-center">
+        {/* Print Sheet Header */}
+        <div className="text-center mb-4 pb-2 border-b-2 border-gray-400 w-full max-w-[190mm]">
+          <h2 className="text-[11px] font-black text-gray-800 tracking-wider uppercase font-serif">
+            People's Republic of Bangladesh • Directorate General of Health Services
+          </h2>
+          <h1 className="text-base font-black text-[#8B1028] tracking-widest uppercase mt-0.5">
+            National Blood Connection • Official Voluntary Donor Badge
+          </h1>
+          <p className="text-[9px] text-gray-600 mt-0.5 font-mono">
+            Standard PVC Card Format (CR80: 85.6 mm × 54.0 mm) • Verified National Repository
+          </p>
+        </div>
+
+        {/* Side-by-Side Front and Back Cards with Cut Borders */}
+        <div className="flex flex-row items-center justify-center gap-8 my-2">
+          {/* ================= FRONT SIDE (PRINT) ================= */}
+          <div className="flex flex-col items-center">
+            <span className="text-[9px] font-bold text-gray-600 uppercase mb-1 flex items-center gap-1 font-mono">
+              <span>✂ Card Front (কার্ড সম্মুখভাগ)</span>
+            </span>
+            <div
+              className="w-[85.6mm] h-[54.0mm] p-[1mm] rounded-[3mm] border border-dashed border-gray-400 bg-white flex items-center justify-center shadow-sm"
+              style={{
+                WebkitPrintColorAdjust: 'exact',
+                printColorAdjust: 'exact',
+              }}
+            >
+              <div
+                className="w-full h-full rounded-[2.5mm] p-2 flex flex-col justify-between relative overflow-hidden border border-[#D4AF37]"
+                style={{
+                  background: 'linear-gradient(135deg, #4A0D1C 0%, #2A050E 100%)',
+                  color: '#FFFFFF',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact',
+                }}
+              >
+                {/* Watermark Logo */}
+                <img
+                  src="/assets/images/blood-connection-logo-final.png"
+                  alt=""
+                  className="absolute right-[-4mm] top-[-4mm] w-[32mm] h-[32mm] opacity-15 pointer-events-none object-contain"
+                />
+
+                {/* Front Top Header */}
+                <div className="flex items-center justify-between border-b border-[#D4AF37]/40 pb-1 z-10">
+                  <div className="flex items-center gap-1.5">
+                    <img
+                      src="/assets/images/blood-connection-logo-final.png"
+                      alt="Logo"
+                      className="w-6 h-6 object-contain"
+                    />
+                    <div>
+                      <h4 className="font-serif font-black text-[10px] tracking-wider text-[#D4AF37] leading-none">
+                        BLOOD CONNECTION
+                      </h4>
+                      <p className="text-[6.5px] uppercase tracking-widest text-[#F8F1E5]/80 mt-0.5">
+                        National Blood Ecosystem Bangladesh
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[7.5px] uppercase px-1.5 py-0.5 rounded-full bg-emerald-600 text-white font-bold tracking-wide">
+                    {idCard.status}
+                  </span>
+                </div>
+
+                {/* Front Middle Body */}
+                <div className="flex items-center gap-2.5 my-auto z-10">
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={idCard.avatarUrl}
+                      alt={idCard.fullName}
+                      className="w-[16mm] h-[16mm] rounded-lg object-cover border border-[#D4AF37]"
+                    />
+                    {idCard.bloodGroup && (
+                      <div className="absolute -bottom-1 -right-1 bg-[#8B1028] border border-[#D4AF37] text-white font-black text-[9px] px-1 rounded">
+                        {idCard.bloodGroup}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-serif font-black text-[12px] text-white uppercase truncate leading-tight">
+                      {idCard.fullName}
+                    </h3>
+                    <div className="mt-0.5">
+                      <span className="text-[7.5px] uppercase px-1.5 py-0.5 rounded-full bg-[#8B1028] text-[#D4AF37] font-bold border border-[#D4AF37]/50">
+                        {idCard.role.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-[8px] text-[#D4AF37] font-mono font-bold mt-1">
+                      ID: <span className="text-white">{idCard.idNumber}</span>
+                    </p>
+                    {(idCard.assignedDistrict || idCard.organizationName) && (
+                      <p className="text-[7.5px] text-[#F8F1E5]/80 truncate mt-0.5">
+                        {idCard.organizationName || `${idCard.assignedUpazila ? idCard.assignedUpazila + ', ' : ''}${idCard.assignedDistrict}`}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* High Contrast Scannable Print QR Code */}
+                  <div className="flex-shrink-0 p-1 bg-white rounded-md border border-[#D4AF37]">
+                    <QRCodeSVG
+                      value={verificationUrl}
+                      size={48}
+                      level="M"
+                      includeMargin={false}
+                    />
+                  </div>
+                </div>
+
+                {/* Front Footer */}
+                <div className="flex items-center justify-between border-t border-[#D4AF37]/40 pt-0.5 text-[7px] text-[#F8F1E5]/80 z-10 font-mono">
+                  <div>
+                    <span className="text-[#D4AF37]">ISSUED: </span>
+                    <span className="text-white">{idCard.issueDate}</span>
+                  </div>
+                  {idCard.expiryDate && (
+                    <div>
+                      <span className="text-[#D4AF37]">EXPIRES: </span>
+                      <span className="text-white">{idCard.expiryDate}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-0.5 text-[#D4AF37] font-bold">
+                    <Award className="w-2.5 h-2.5 text-[#D4AF37]" />
+                    <span>DGHS COMPLIANT</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ================= BACK SIDE (PRINT) ================= */}
+          <div className="flex flex-col items-center">
+            <span className="text-[9px] font-bold text-gray-600 uppercase mb-1 flex items-center gap-1 font-mono">
+              <span>✂ Card Back (কার্ড বিপরীতভাগ)</span>
+            </span>
+            <div
+              className="w-[85.6mm] h-[54.0mm] p-[1mm] rounded-[3mm] border border-dashed border-gray-400 bg-white flex items-center justify-center shadow-sm"
+              style={{
+                WebkitPrintColorAdjust: 'exact',
+                printColorAdjust: 'exact',
+              }}
+            >
+              <div
+                className="w-full h-full rounded-[2.5mm] p-2 flex flex-col justify-between relative overflow-hidden border border-[#D4AF37]"
+                style={{
+                  background: 'linear-gradient(135deg, #3A0713 0%, #1A0207 100%)',
+                  color: '#FFFFFF',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact',
+                }}
+              >
+                {/* Back Top */}
+                <div className="border-b border-[#D4AF37]/40 pb-1 text-center">
+                  <h4 className="font-serif font-black text-[9px] text-[#D4AF37] tracking-wider uppercase">
+                    Official National Voluntary Donor Identity
+                  </h4>
+                  <p className="text-[6.5px] text-[#F8F1E5]/80 mt-0.5">
+                    Government of the People's Republic of Bangladesh • DGHS Aligned
+                  </p>
+                </div>
+
+                {/* Back Body Terms */}
+                <div className="space-y-1 text-[7.5px] text-[#F8F1E5]/90 my-auto py-0.5">
+                  <div className="flex justify-between border-b border-[#D4AF37]/20 pb-0.5 font-mono">
+                    <span className="text-[#D4AF37]">Verification Token:</span>
+                    <span className="text-white font-bold">{idCard.verificationToken}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#D4AF37]/20 pb-0.5">
+                    <span className="text-[#D4AF37]">National Health Helpline:</span>
+                    <span className="text-white font-bold">16263 / 999</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#D4AF37]/20 pb-0.5">
+                    <span className="text-[#D4AF37]">3-Month Safety Cooldown:</span>
+                    <span className="text-emerald-300 font-bold">Strictly Enforced</span>
+                  </div>
+                  <p className="text-[6.5px] text-[#F8F1E5]/70 leading-tight pt-0.5">
+                    * If found, please return to the nearest Upazila Health Complex, District Sadar Hospital, or Red Crescent blood center.
+                  </p>
+                </div>
+
+                {/* Back Footer */}
+                <div className="border-t border-[#D4AF37]/40 pt-1 flex items-center justify-between text-[7px] text-[#D4AF37] font-mono">
+                  <span>bloodconnection.org.bd</span>
+                  <span>Scan QR code to verify live status</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Print Guidelines */}
+        <div className="text-center mt-6 pt-3 border-t border-gray-400 w-full max-w-[190mm] text-[8.5px] text-gray-600 font-mono">
+          <p className="font-bold text-gray-800">
+            ✂ CUTTING & LAMINATING INSTRUCTIONS (মুদ্রণ ও লেমিনেটিং নির্দেশনা):
+          </p>
+          <p className="mt-0.5">
+            1. Print at 100% scale (Do not choose 'Fit to page'). • 2. Cut along the dotted line guidelines. • 3. Fold back-to-back or place in standard PVC badge pouch.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
