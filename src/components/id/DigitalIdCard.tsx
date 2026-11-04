@@ -108,16 +108,80 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
       const canvas = await html2canvas(cardRef.current, {
         scale: 3,
         useCORS: true,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#4A0D1C',
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: 'portrait',
         unit: 'mm',
-        format: [85.6, 53.98], // Standard ISO/IEC 7810 ID-1 credit card size in mm
+        format: 'a4',
       });
-      pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 53.98);
-      pdf.save(`${idCard.idNumber}-Official-ID.pdf`);
+
+      // Republic Official Header
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9.5);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(
+        "PEOPLE'S REPUBLIC OF BANGLADESH • DIRECTORATE GENERAL OF HEALTH SERVICES",
+        105,
+        25,
+        { align: 'center' }
+      );
+      pdf.setFontSize(13);
+      pdf.setTextColor(139, 16, 40); // Royal Crimson
+      pdf.text(
+        "NATIONAL BLOOD CONNECTION • OFFICIAL VOLUNTARY DONOR BADGE",
+        105,
+        33,
+        { align: 'center' }
+      );
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(110, 110, 110);
+      pdf.text(
+        "Standard PVC Badge Format (CR80: 85.6 mm x 54.0 mm) • Verified National Repository",
+        105,
+        39,
+        { align: 'center' }
+      );
+
+      // Card Image centered at exact physical CR80 dimensions: 85.6 mm × 54.0 mm
+      const cardX = (210 - 85.6) / 2; // 62.2 mm
+      const cardY = 48;
+      pdf.addImage(imgData, 'PNG', cardX, cardY, 85.6, 54.0);
+
+      // Cutting Guideline (Dotted Border with Scissors Guide)
+      pdf.setDrawColor(180, 180, 180);
+      pdf.setLineDashPattern([2, 2], 0);
+      pdf.rect(cardX - 1.5, cardY - 1.5, 85.6 + 3, 54.0 + 3);
+
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(
+        "✂ Cut along the dotted line (কাঁচি দিয়ে ডটেড লাইন বরাবর কাটুন)",
+        105,
+        cardY + 54.0 + 7,
+        { align: 'center' }
+      );
+
+      // Instructions Divider & Guidance
+      pdf.setLineDashPattern([], 0);
+      pdf.setDrawColor(210, 210, 210);
+      pdf.line(20, 120, 190, 120);
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text("PRINTING & LAMINATING INSTRUCTIONS (মুদ্রণ ও লেমিনেটিং নির্দেশনা):", 105, 128, { align: 'center' });
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text("1. Print this sheet on A4 paper or Photo Paper at 100% scale (Do not select 'Fit to page').", 105, 134, { align: 'center' });
+      pdf.text("2. Cut along the dotted border and laminate or place inside a standard PVC ID card badge holder.", 105, 139, { align: 'center' });
+      pdf.text("3. The QR code on the card can be scanned by any smartphone camera for live DGHS registry verification.", 105, 144, { align: 'center' });
+
+      pdf.save(`${idCard.idNumber}-Printable-Official-ID.pdf`);
     } catch (err) {
       console.error('Failed to export PDF', err);
     } finally {
