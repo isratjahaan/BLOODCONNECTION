@@ -32,6 +32,8 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
   const [downloading, setDownloading] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const exportCardRef = useRef<HTMLDivElement>(null);
+  const exportBackRef = useRef<HTMLDivElement>(null);
 
   // Generate universal cross-device QR code payload (compact for ultra-fast mobile camera scanning)
   const generateVerificationUrl = (card: IdCardType) => {
@@ -82,16 +84,17 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
   };
 
   const downloadCardAsImage = async () => {
-    if (!cardRef.current) return;
+    const target = exportCardRef.current || cardRef.current;
+    if (!target) return;
     setDownloading(true);
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3, // High DPI for crisp printing
+      const canvas = await html2canvas(target, {
+        scale: 2,
         useCORS: true,
-        backgroundColor: null,
+        backgroundColor: '#4A0D1C',
       });
       const link = document.createElement('a');
-      link.download = `${idCard.idNumber}-ID-Card.png`;
+      link.download = `${idCard.idNumber}-Official-ID.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
@@ -102,15 +105,29 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
   };
 
   const downloadCardAsPdf = async () => {
-    if (!cardRef.current) return;
+    const frontEl = exportCardRef.current || cardRef.current;
+    if (!frontEl) return;
     setDownloading(true);
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
+      // 1. Capture Front Side
+      const frontCanvas = await html2canvas(frontEl, {
+        scale: 2.5,
         useCORS: true,
         backgroundColor: '#4A0D1C',
       });
-      const imgData = canvas.toDataURL('image/png');
+      const frontImg = frontCanvas.toDataURL('image/png');
+
+      // 2. Capture Back Side if available
+      let backImg: string | null = null;
+      if (exportBackRef.current) {
+        const backCanvas = await html2canvas(exportBackRef.current, {
+          scale: 2.5,
+          useCORS: true,
+          backgroundColor: '#3A0713',
+        });
+        backImg = backCanvas.toDataURL('image/png');
+      }
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -124,7 +141,7 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
       pdf.text(
         "PEOPLE'S REPUBLIC OF BANGLADESH • DIRECTORATE GENERAL OF HEALTH SERVICES",
         105,
-        25,
+        22,
         { align: 'center' }
       );
       pdf.setFontSize(13);
@@ -132,7 +149,7 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
       pdf.text(
         "NATIONAL BLOOD CONNECTION • OFFICIAL VOLUNTARY DONOR BADGE",
         105,
-        33,
+        29,
         { align: 'center' }
       );
       pdf.setFont('helvetica', 'normal');
@@ -141,47 +158,71 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
       pdf.text(
         "Standard PVC Badge Format (CR80: 85.6 mm x 54.0 mm) • Verified National Repository",
         105,
-        39,
+        35,
         { align: 'center' }
       );
 
-      // Card Image centered at exact physical CR80 dimensions: 85.6 mm × 54.0 mm
-      const cardX = (210 - 85.6) / 2; // 62.2 mm
-      const cardY = 48;
-      pdf.addImage(imgData, 'PNG', cardX, cardY, 85.6, 54.0);
+      // Card Dimensions
+      const cardW = 85.6;
+      const cardH = 54.0;
+      const cardX = (210 - cardW) / 2; // 62.2 mm
 
-      // Cutting Guideline (Dotted Border with Scissors Guide)
+      // 1. FRONT SIDE
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text("CARD FRONT (সম্মুখভাগ)", 105, 42, { align: 'center' });
+      pdf.addImage(frontImg, 'PNG', cardX, 45, cardW, cardH);
+
+      // Cutting guideline for front
       pdf.setDrawColor(180, 180, 180);
       pdf.setLineDashPattern([2, 2], 0);
-      pdf.rect(cardX - 1.5, cardY - 1.5, 85.6 + 3, 54.0 + 3);
+      pdf.rect(cardX - 1, 44, cardW + 2, cardH + 2);
 
+      // 2. BACK SIDE (if captured)
+      if (backImg) {
+        pdf.setLineDashPattern([], 0);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text("CARD BACK (বিপরীতভাগ)", 105, 109, { align: 'center' });
+        pdf.addImage(backImg, 'PNG', cardX, 112, cardW, cardH);
+
+        // Cutting guideline for back
+        pdf.setDrawColor(180, 180, 180);
+        pdf.setLineDashPattern([2, 2], 0);
+        pdf.rect(cardX - 1, 111, cardW + 2, cardH + 2);
+      }
+
+      // Cutting Guideline instruction
+      pdf.setLineDashPattern([], 0);
       pdf.setFontSize(7.5);
       pdf.setTextColor(120, 120, 120);
       pdf.text(
-        "✂ Cut along the dotted line (কাঁচি দিয়ে ডটেড লাইন বরাবর কাটুন)",
+        "✂ Cut along the dotted line and fold in half (কাঁচি দিয়ে ডটেড লাইন বরাবর কাটুন ও ভাঁজ করুন)",
         105,
-        cardY + 54.0 + 7,
+        backImg ? 173 : 106,
         { align: 'center' }
       );
 
       // Instructions Divider & Guidance
-      pdf.setLineDashPattern([], 0);
       pdf.setDrawColor(210, 210, 210);
-      pdf.line(20, 120, 190, 120);
+      const divY = backImg ? 180 : 115;
+      pdf.line(20, divY, 190, divY);
 
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(8.5);
       pdf.setTextColor(60, 60, 60);
-      pdf.text("PRINTING & LAMINATING INSTRUCTIONS (মুদ্রণ ও লেমিনেটিং নির্দেশনা):", 105, 128, { align: 'center' });
+      pdf.text("PRINTING & LAMINATING INSTRUCTIONS (মুদ্রণ ও লেমিনেটিং নির্দেশনা):", 105, divY + 7, { align: 'center' });
 
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(7.5);
       pdf.setTextColor(100, 100, 100);
-      pdf.text("1. Print this sheet on A4 paper or Photo Paper at 100% scale (Do not select 'Fit to page').", 105, 134, { align: 'center' });
-      pdf.text("2. Cut along the dotted border and laminate or place inside a standard PVC ID card badge holder.", 105, 139, { align: 'center' });
-      pdf.text("3. The QR code on the card can be scanned by any smartphone camera for live DGHS registry verification.", 105, 144, { align: 'center' });
+      pdf.text("1. Print this sheet on A4 paper or Photo Paper at 100% scale (Do not select 'Fit to page').", 105, divY + 13, { align: 'center' });
+      pdf.text("2. Cut along the dotted border and laminate or place inside a standard PVC ID card badge holder.", 105, divY + 18, { align: 'center' });
+      pdf.text("3. The QR code on the card can be scanned by any smartphone camera for live DGHS registry verification.", 105, divY + 23, { align: 'center' });
 
-      pdf.save(`${idCard.idNumber}-Printable-Official-ID.pdf`);
+      pdf.save(`${idCard.idNumber}-Official-ID-Card.pdf`);
     } catch (err) {
       console.error('Failed to export PDF', err);
     } finally {
@@ -727,6 +768,381 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
           <p className="mt-0.5">
             1. Print at 100% scale (Do not choose 'Fit to page'). • 2. Cut along the dotted line guidelines. • 3. Fold back-to-back or place in standard PVC badge pouch.
           </p>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* 2D FLAT EXPORT CONTAINERS (Used exclusively by html2canvas)   */}
+      {/* Zero 3D transforms, exact pixel dimensions, pixel-perfect PDF  */}
+      {/* ============================================================== */}
+      <div
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: '0',
+          zIndex: -100,
+          pointerEvents: 'none',
+        }}
+      >
+        {/* FLAT FRONT CARD (600px x 380px) */}
+        <div
+          ref={exportCardRef}
+          style={{
+            width: '600px',
+            height: '380px',
+            background: 'linear-gradient(135deg, #4A0D1C 0%, #2A050E 100%)',
+            border: '3px solid #D4AF37',
+            borderRadius: '16px',
+            padding: '20px',
+            color: '#FFFFFF',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            boxSizing: 'border-box',
+            fontFamily: "'Inter', sans-serif",
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid rgba(212, 175, 55, 0.4)',
+              paddingBottom: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img
+                src="/assets/images/blood-connection-logo-final.png"
+                alt="Logo"
+                style={{ width: '42px', height: '42px', objectFit: 'contain' }}
+              />
+              <div>
+                <div
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontWeight: 900,
+                    fontSize: '16px',
+                    letterSpacing: '1px',
+                    color: '#D4AF37',
+                    lineHeight: '1.2',
+                  }}
+                >
+                  BLOOD CONNECTION
+                </div>
+                <div
+                  style={{
+                    fontSize: '9px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1.5px',
+                    color: 'rgba(248, 241, 229, 0.8)',
+                  }}
+                >
+                  National Blood Ecosystem Bangladesh
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                background: '#10B981',
+                color: '#FFFFFF',
+                fontSize: '10px',
+                fontWeight: 800,
+                padding: '3px 10px',
+                borderRadius: '12px',
+                letterSpacing: '0.5px',
+              }}
+            >
+              {idCard.status}
+            </div>
+          </div>
+
+          {/* Middle Body */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              margin: 'auto 0',
+            }}
+          >
+            {/* Avatar & Blood Group */}
+            <div
+              style={{
+                position: 'relative',
+                flexShrink: 0,
+                width: '100px',
+                height: '100px',
+              }}
+            >
+              <img
+                src={idCard.avatarUrl}
+                alt={idCard.fullName}
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '12px',
+                  objectFit: 'cover',
+                  border: '2px solid #D4AF37',
+                }}
+              />
+              {idCard.bloodGroup && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '-4px',
+                    right: '-4px',
+                    background: '#8B1028',
+                    border: '2px solid #D4AF37',
+                    color: '#FFFFFF',
+                    fontWeight: 900,
+                    fontSize: '13px',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  {idCard.bloodGroup}
+                </div>
+              )}
+            </div>
+
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                  fontWeight: 900,
+                  fontSize: '20px',
+                  color: '#FFFFFF',
+                  textTransform: 'uppercase',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  lineHeight: '1.2',
+                }}
+              >
+                {idCard.fullName}
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    padding: '3px 10px',
+                    borderRadius: '12px',
+                    background: '#8B1028',
+                    color: '#D4AF37',
+                    fontWeight: 800,
+                    border: '1px solid rgba(212, 175, 55, 0.5)',
+                  }}
+                >
+                  {idCard.role.replace('_', ' ')}
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: '#D4AF37',
+                  fontFamily: 'monospace',
+                  fontWeight: 800,
+                  marginTop: '8px',
+                }}
+              >
+                ID: <span style={{ color: '#FFFFFF' }}>{idCard.idNumber}</span>
+              </div>
+              {(idCard.assignedDistrict || idCard.organizationName) && (
+                <div
+                  style={{
+                    fontSize: '11px',
+                    color: 'rgba(248, 241, 229, 0.85)',
+                    marginTop: '2px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {idCard.organizationName ||
+                    `${idCard.assignedUpazila ? idCard.assignedUpazila + ', ' : ''}${idCard.assignedDistrict}`}
+                </div>
+              )}
+            </div>
+
+            {/* Scannable High-Contrast QR Code */}
+            <div
+              style={{
+                flexShrink: 0,
+                padding: '6px',
+                background: '#FFFFFF',
+                borderRadius: '10px',
+                border: '2px solid #D4AF37',
+              }}
+            >
+              <QRCodeSVG
+                value={verificationUrl}
+                size={80}
+                level="M"
+                includeMargin={false}
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTop: '1px solid rgba(212, 175, 55, 0.4)',
+              paddingTop: '8px',
+              fontSize: '10px',
+              color: 'rgba(248, 241, 229, 0.8)',
+              fontFamily: 'monospace',
+            }}
+          >
+            <div>
+              <span style={{ color: '#D4AF37' }}>ISSUED: </span>
+              <span style={{ color: '#FFFFFF' }}>{idCard.issueDate}</span>
+            </div>
+            {idCard.expiryDate && (
+              <div>
+                <span style={{ color: '#D4AF37' }}>EXPIRES: </span>
+                <span style={{ color: '#FFFFFF' }}>{idCard.expiryDate}</span>
+              </div>
+            )}
+            <div style={{ color: '#D4AF37', fontWeight: 800, letterSpacing: '0.5px' }}>
+              DGHS COMPLIANT
+            </div>
+          </div>
+        </div>
+
+        {/* FLAT BACK CARD (600px x 380px) */}
+        <div
+          ref={exportBackRef}
+          style={{
+            width: '600px',
+            height: '380px',
+            background: 'linear-gradient(135deg, #3A0713 0%, #1A0207 100%)',
+            border: '3px solid #D4AF37',
+            borderRadius: '16px',
+            padding: '20px',
+            color: '#FFFFFF',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            boxSizing: 'border-box',
+            fontFamily: "'Inter', sans-serif",
+            marginTop: '20px',
+          }}
+        >
+          {/* Back Top */}
+          <div
+            style={{
+              borderBottom: '1px solid rgba(212, 175, 55, 0.4)',
+              paddingBottom: '8px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontWeight: 900,
+                fontSize: '13px',
+                color: '#D4AF37',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Official National Voluntary Donor Identity
+            </div>
+            <div
+              style={{
+                fontSize: '9px',
+                color: 'rgba(248, 241, 229, 0.8)',
+                marginTop: '2px',
+              }}
+            >
+              Government of the People's Republic of Bangladesh • DGHS Aligned
+            </div>
+          </div>
+
+          {/* Back Body Terms */}
+          <div
+            style={{
+              margin: 'auto 0',
+              fontSize: '11px',
+              color: 'rgba(248, 241, 229, 0.9)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
+                paddingBottom: '4px',
+                fontFamily: 'monospace',
+              }}
+            >
+              <span style={{ color: '#D4AF37' }}>Verification Token:</span>
+              <span style={{ color: '#FFFFFF', fontWeight: 'bold' }}>
+                {idCard.verificationToken}
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
+                paddingBottom: '4px',
+              }}
+            >
+              <span style={{ color: '#D4AF37' }}>National Health Helpline:</span>
+              <span style={{ color: '#FFFFFF', fontWeight: 'bold' }}>16263 / 999</span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
+                paddingBottom: '4px',
+              }}
+            >
+              <span style={{ color: '#D4AF37' }}>3-Month Safety Cooldown:</span>
+              <span style={{ color: '#6EE7B7', fontWeight: 'bold' }}>Strictly Enforced</span>
+            </div>
+            <div
+              style={{
+                fontSize: '9px',
+                color: 'rgba(248, 241, 229, 0.7)',
+                lineHeight: '1.3',
+                marginTop: '4px',
+              }}
+            >
+              * If found, please return to the nearest Upazila Health Complex, District Sadar
+              Hospital, or Red Crescent blood center.
+            </div>
+          </div>
+
+          {/* Back Footer */}
+          <div
+            style={{
+              borderTop: '1px solid rgba(212, 175, 55, 0.4)',
+              paddingTop: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '10px',
+              color: '#D4AF37',
+              fontFamily: 'monospace',
+            }}
+          >
+            <span>bloodconnection.org.bd</span>
+            <span>Scan QR code on front to verify live status</span>
+          </div>
         </div>
       </div>
     </div>
