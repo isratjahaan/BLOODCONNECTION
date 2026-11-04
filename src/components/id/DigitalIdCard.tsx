@@ -14,6 +14,8 @@ import {
   ExternalLink,
   Award,
   Globe,
+  X,
+  QrCode,
 } from 'lucide-react';
 
 interface DigitalIdCardProps {
@@ -28,25 +30,25 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
   const [isFlipped, setIsFlipped] = useState(false);
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Generate universal cross-device QR code payload
+  // Generate universal cross-device QR code payload (compact for ultra-fast mobile camera scanning)
   const generateVerificationUrl = (card: IdCardType) => {
     try {
-      const payload = {
+      const payload: any = {
         t: card.verificationToken,
         n: card.fullName,
         r: card.role,
         i: card.idNumber,
         b: card.bloodGroup,
-        a: card.avatarUrl,
         d: card.assignedDistrict,
         u: card.assignedUpazila,
-        o: card.organizationName,
         s: card.status,
         iss: card.issueDate,
         exp: card.expiryDate,
       };
+      if (card.organizationName) payload.o = card.organizationName;
       const jsonStr = JSON.stringify(payload);
       const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
       return `${window.location.origin}/verify/${card.verificationToken}?d=${encoded}`;
@@ -241,12 +243,19 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
                     )}
                   </div>
 
-                  {/* QR Code on Front */}
-                  <div className="flex-shrink-0 p-1.5 bg-white rounded-lg shadow-md border border-gold">
+                  {/* QR Code on Front (Clickable for Mobile Scan) */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQrModal(true);
+                    }}
+                    className="flex-shrink-0 p-1 bg-white rounded-lg shadow-md border-2 border-gold cursor-pointer hover:scale-105 transition-transform"
+                    title="Click to enlarge QR code for mobile phone scanning"
+                  >
                     <QRCodeSVG
                       value={verificationUrl}
-                      size={54}
-                      level="H"
+                      size={64}
+                      level="M"
                       includeMargin={false}
                     />
                   </div>
@@ -351,6 +360,16 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
             <span>Print</span>
           </button>
 
+          {/* Mobile Scan Large QR Trigger */}
+          <button
+            onClick={() => setShowQrModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-burgundy-dark hover:bg-burgundy border-2 border-gold text-gold text-xs font-bold transition-all shadow cursor-pointer"
+            title="Open large QR code to easily scan from mobile phone"
+          >
+            <QrCode className="w-3.5 h-3.5 text-gold" />
+            <span>📱 Mobile Scan</span>
+          </button>
+
           {/* Open Verification Portal */}
           <a
             href={verificationUrl}
@@ -380,6 +399,63 @@ export const DigitalIdCard: React.FC<DigitalIdCardProps> = ({
             <Share2 className="w-3.5 h-3.5" />
             <span>Share ID</span>
           </button>
+        </div>
+      )}
+
+      {/* Large QR Modal for Super Fast Mobile Phone Scanning */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full border-2 border-gold shadow-2xl p-6 text-center flex flex-col items-center relative">
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 text-charcoal/60 hover:text-burgundy transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center text-burgundy mb-2">
+              <QrCode className="w-6 h-6 text-burgundy" />
+            </div>
+
+            <h3 className="font-serif font-black text-xl text-burgundy">
+              Scan with Mobile Phone
+            </h3>
+            <p className="text-xs text-charcoal/70 mt-1 mb-4">
+              Point your phone camera at this QR code to instantly verify this ID card on your mobile device.
+            </p>
+
+            <div className="p-4 bg-white rounded-2xl border-2 border-gold shadow-royal inline-block mb-4">
+              <QRCodeSVG
+                value={verificationUrl}
+                size={220}
+                level="M"
+                includeMargin={true}
+              />
+            </div>
+
+            <p className="text-[11px] font-mono text-charcoal/80 font-bold mb-4">
+              Registry ID: <span className="text-crimson">{idCard.idNumber}</span>
+            </p>
+
+            <div className="flex gap-2 w-full">
+              <a
+                href={verificationUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 py-2.5 rounded-xl bg-burgundy hover:bg-crimson text-gold font-bold text-xs shadow flex items-center justify-center gap-1.5"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Open in Tab</span>
+              </a>
+              <button
+                onClick={copyVerificationLink}
+                className="flex-1 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-burgundy font-bold text-xs shadow flex items-center justify-center gap-1.5"
+              >
+                <Copy className="w-4 h-4" />
+                <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

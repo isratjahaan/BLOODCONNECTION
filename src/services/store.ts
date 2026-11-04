@@ -13,6 +13,7 @@ import {
   UserRole,
   BloodGroup,
 } from '../types';
+import { supabase } from './supabase';
 
 const STORAGE_KEYS = {
   CURRENT_USER: 'bc_current_user',
@@ -1482,6 +1483,42 @@ class BloodConnectionStore {
 
     // Auto-generate Digital ID Card
     const idCard = this.generateIdCardForUser(newProfile, data.bloodGroup);
+
+    // Asynchronously sync new registration & ID card to Supabase Cloud
+    try {
+      const payloadJson = JSON.stringify({
+        fullName: newProfile.fullName,
+        bloodGroup: data.bloodGroup,
+        district: newProfile.districtId,
+        upazila: newProfile.upazilaId,
+        role: newProfile.role,
+        issueDate: idCard.issueDate,
+        expiryDate: idCard.expiryDate,
+        status: idCard.status,
+      });
+
+      supabase
+        .from('id_cards')
+        .insert({
+          role: idCard.role,
+          id_number: idCard.idNumber,
+          verification_token: idCard.verificationToken,
+          status: idCard.status,
+          issue_date: idCard.issueDate,
+          expiry_date: idCard.expiryDate,
+          qr_payload: payloadJson,
+        })
+        .then(
+          ({ error }) => {
+            if (error) {
+              console.warn('Supabase ID Card sync notice:', error.message);
+            }
+          },
+          (err: any) => console.warn('Supabase ID sync skipped:', err)
+        );
+    } catch (e) {
+      console.warn('Supabase sync skipped:', e);
+    }
 
     // Log registration
     this.auditLogs.unshift({

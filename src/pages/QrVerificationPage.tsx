@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { bloodConnectionStore } from '../services/store';
+import { supabase } from '../services/supabase';
 import { Logo } from '../components/common/Logo';
 import { DigitalIdCard } from '../types';
 import { QrScannerModal } from '../components/id/QrScannerModal';
@@ -65,7 +66,53 @@ export const QrVerificationPage: React.FC = () => {
   }, [searchParams, token]);
 
   const storeCard = token ? bloodConnectionStore.getIdCardByToken(token) : undefined;
-  const cardData = decodedCard || storeCard;
+  const [cloudCard, setCloudCard] = useState<DigitalIdCard | null>(null);
+
+  // 2. Fetch from Supabase Cloud if token not in local storage
+  useEffect(() => {
+    if (!decodedCard && !storeCard && token) {
+      const cleanToken = token.trim();
+      supabase
+        .from('id_cards')
+        .select('*')
+        .or(`verification_token.eq.${cleanToken},id_number.eq.${cleanToken}`)
+        .maybeSingle()
+        .then(
+          ({ data, error }) => {
+            if (data && !error) {
+              let meta: any = {};
+              try {
+                meta = JSON.parse(data.qr_payload);
+              } catch {}
+              const loadedCard: DigitalIdCard = {
+                id: data.id,
+                userId: data.user_id || `user-${data.id}`,
+                role: data.role,
+                idNumber: data.id_number,
+                verificationToken: data.verification_token,
+                fullName: meta.fullName || 'Verified Member',
+                bloodGroup: meta.bloodGroup || 'O+',
+                avatarUrl:
+                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=256',
+                assignedDistrict: meta.district,
+                assignedUpazila: meta.upazila,
+                organizationName: meta.organizationName,
+                status: data.status,
+                issueDate: data.issue_date,
+                expiryDate: data.expiry_date,
+                donationCount: 0,
+                qrPayload: data.qr_payload,
+              };
+              setCloudCard(loadedCard);
+              bloodConnectionStore.saveIdCard(loadedCard);
+            }
+          },
+          (err: any) => console.warn('Supabase fetch error:', err)
+        );
+    }
+  }, [token, decodedCard, storeCard]);
+
+  const cardData = decodedCard || cloudCard || storeCard;
 
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
